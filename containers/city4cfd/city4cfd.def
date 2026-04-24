@@ -1,0 +1,30 @@
+# ===========================================
+# city4cfd Apptainer Definition
+# ===========================================
+#
+# Base: Pre-built Docker image from tudelft3d
+# This definition is primarily for documentation.
+# The actual SIF is built by pulling the Docker image.
+#
+# Usage:
+#   apptainer pull images/city4cfd.sif docker://tudelft3d/city4cfd:latest
+#
+# ===========================================
+
+Bootstrap: docker
+From: tudelft3d/city4cfd:latest
+
+%labels
+    org.opencontainers.image.source = "https://github.com/tudelft3d/City4CFD"
+    org.opencontainers.image.description = "City4CFD mesh generator for urban CFD"
+    version = "0.8.0"
+
+%post
+    # The tudelft3d/city4cfd image already includes all dependencies:
+    # - CGAL 6.0+
+    # - Boost
+    # - Eigen
+    # - GDAL
+    # - city4cfd and city4cfd_pcprep binaries
+
+    echo "city4cfd container ready"

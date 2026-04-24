@@ -1,0 +1,42 @@
+# ===========================================
+# openfoam Apptainer Definition
+# ===========================================
+#
+# Base: ESI OpenFOAM-v2312
+# Source code cloned from GitHub at build time.
+# Custom solvers compiled inside container.
+#
+# Usage:
+#   ./build.sh              # Build SIF from this definition (~60-90 min)
+#   ./run.sh bash          # Enter container shell
+#
+# ===========================================
+
+Bootstrap: docker
+From: openfoam/openfoam2312:latest
+
+%post
+    # Install build essentials
+    apt-get update && apt-get install -y \
+        git \
+        build-essential \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Clone openfoam-ext repo (source code encapsulated in container)
+    mkdir -p /opt
+    git clone https://github.com/wangsen992/openfoam-ext.git /opt/openfoam-ext || true
+
+    # Source OpenFOAM environment and compile custom solvers
+    . /opt/openfoam/OpenFOAM-v2312/etc/bashrc
+    cd /opt/openfoam-ext
+    ./Allwmake
+
+    echo "OpenFOAM container ready with custom solvers"
+
+%labels
+    org.opencontainers.image.source = "https://github.com/wangsen992/openfoam-ext"
+    org.opencontainers.image.description = "ESI OpenFOAM-v2312 with CROCUS custom solvers"
+    version = "v2312+crocus"
+
+%environment
+    . /opt/openfoam/OpenFOAM-v2312/etc/bashrc

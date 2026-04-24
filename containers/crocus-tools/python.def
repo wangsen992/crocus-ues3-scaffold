@@ -1,0 +1,59 @@
+# ===========================================
+# crocus-tools Apptainer Definition
+# ===========================================
+#
+# Base: python:3.11-slim with all dependencies bundled
+# Includes: numpy, pandas, geopandas, laspy, pyvista, etc.
+# Source code cloned from GitHub at build time.
+#
+# Usage:
+#   ./build.sh              # Build SIF from this definition
+#   ./run.sh crocus --help  # Run crocus CLI
+#
+# ===========================================
+
+Bootstrap: docker
+From: python:3.11-slim
+
+%post
+    apt-get update && apt-get install -y \
+        git \
+        wget \
+        curl \
+        libgdal-dev \
+        gdal-bin \
+        libproj-dev \
+        proj-bin \
+        libgeos-dev \
+        libsqlite3-dev \
+        && rm -rf /var/lib/apt/lists/*
+
+    pip install --no-cache-dir \
+        numpy \
+        pandas \
+        geopandas \
+        laspy \
+        PyYAML \
+        shapely \
+        pyproj \
+        scipy \
+        pyvista \
+        matplotlib \
+        utm
+
+    # Clone crocus-tools source (encapsulated in container)
+    mkdir -p /opt/crocus-tools
+    git clone https://github.com/wangsen992/crocus-tools.git /opt/crocus-tools || true
+
+    # Install crocus-tools package
+    cd /opt/crocus-tools && pip install -e .
+
+    echo "crocus-tools container ready"
+
+%labels
+    org.opencontainers.image.source = "https://github.com/wangsen992/crocus-tools"
+    org.opencontainers.image.description = "CROCUS Python tools for urban CFD preprocessing"
+    version = "0.1.0"
+
+%environment
+    export PYTHONPATH="/opt/crocus-tools:$PYTHONPATH"
