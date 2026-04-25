@@ -15,4 +15,5 @@ venv/
 *.sif
 *.img
 **/overlay/
-lastools
+containers/lastools/LAStools/
+containers/lastools/*.tar.gz

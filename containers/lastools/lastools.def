@@ -1,0 +1,26 @@
+# ===========================================
+# LAStools Apptainer Definition (Conda)
+# ===========================================
+#
+# Includes LAStools from conda-forge with all dependencies
+# for LAZ to LAS conversion
+#
+# Build:
+#   ./build.sh
+#
+# Usage:
+#   ./run.sh laszip -i input.laz -o output.las
+#   ./run.sh las2las -i input.laz -o output.las
+#
+# ===========================================
+
+Bootstrap: docker
+From: continuumio/miniconda3:latest
+
+%post
+    conda install -y -c conda-forge lastools && conda clean -afy
+    echo "LAStools installed via conda"
+
+%labels
+    org.opencontainers.image.description = "LAStools for LAZ/LAS processing"
+    version = "2024-07-08"
