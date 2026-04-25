@@ -1,0 +1,42 @@
+# ===========================================
+# USGS LIDAR Downloader Apptainer Definition
+# ===========================================
+#
+# Downloads LIDAR point cloud tiles (LAZ) from USGS 3DEP via TNM Access API
+#
+# Usage:
+#   ./build.sh
+#   ./run.sh --bbox xmin ymin xmax ymax --download --outdir /data/downloads
+#   ./run.sh --bbox xmin ymin xmax ymax --dry-run
+#
+# ===========================================
+
+Bootstrap: docker
+From: python:3.11-slim
+
+%labels
+    org.opencontainers.image.source = "https://github.com/wangsen992/usgs-lidar-downloader"
+    org.opencontainers.image.description = "USGS 3DEP LIDAR download CLI for urban CFD workflows"
+    version = "1.0.0"
+
+%post
+    apt-get update && apt-get install -y --no-install-recommends git
+    rm -rf /var/lib/apt/lists/*
+    git clone https://github.com/wangsen992/usgs-lidar-downloader.git /opt/usgs-lidar-download
+
+%environment
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/usgs-lidar-download/src
+
+%runscript
+    cd /data
+    exec python3 /opt/usgs-lidar-download/src/cli.py "$@"
+
+%help
+    USGS LIDAR Downloader - downloads LAZ tiles from USGS 3DEP
+
+    Example:
+      ./run.sh --bbox -87.65 41.87 -87.62 41.89 --dry-run
+      ./run.sh --bbox -87.65 41.87 -87.62 41.89 --download --outdir /data/lidar

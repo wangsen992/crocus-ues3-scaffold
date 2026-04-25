@@ -1,0 +1,50 @@
+# ===========================================
+# OpenBuildingMap Downloader Apptainer Definition
+# ===========================================
+#
+# Downloads building footprints from OpenBuildingMap public tiles
+#
+# Usage:
+#   ./build.sh
+#   ./run.sh --bbox xmin ymin xmax ymax --out /data/buildings.geojson
+#   ./run.sh --bbox xmin ymin xmax ymax --dry-run
+#
+# ===========================================
+
+Bootstrap: docker
+From: python:3.11-slim
+
+%labels
+    org.opencontainers.image.source = "https://github.com/wangsen992/obm-building-downloader"
+    org.opencontainers.image.description = "OpenBuildingMap building footprint downloader for urban CFD workflows"
+    version = "1.0.0"
+
+%post
+    apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        gdal-bin \
+        libgdal-dev \
+        bzip2 \
+    && rm -rf /var/lib/apt/lists/*
+    pip install --no-cache-dir shapely pyproj fiona
+    git clone https://github.com/wangsen992/obm-building-downloader.git /opt/obm-building-download
+
+%environment
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/obm-building-download/src
+    export PATH=/usr/libexec/ogr:/usr/bin:$PATH
+
+%runscript
+    cd /data
+    export PYTHONPATH=/opt/obm-building-download/src
+    export LD_LIBRARY_PATH=/opt/conda/lib:$LD_LIBRARY_PATH
+    exec python3 /opt/obm-building-download/src/cli.py "$@"
+
+%help
+    OpenBuildingMap Building Footprint Downloader
+
+    Example:
+      ./run.sh --bbox -87.65 41.87 -87.62 41.89 --out /data/buildings.geojson --dry-run
+      ./run.sh --bbox -87.65 41.87 -87.62 41.89 --out /data/buildings.geojson
