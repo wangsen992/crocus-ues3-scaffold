@@ -11,6 +11,8 @@ IMAGE_PATH="$SCRIPT_DIR/images/usgs-lidar-downloader.sif"
 echo "[build] Building USGS LIDAR Downloader container..."
 echo "       Image: $IMAGE_PATH"
 
+mkdir -p $SCRIPT_DIR/images
 apptainer build --fakeroot --force "$IMAGE_PATH" "$SCRIPT_DIR/usgs-lidar-downloader.def"
 
 echo "[done] Built image at $IMAGE_PATH"
+

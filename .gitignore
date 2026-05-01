@@ -17,3 +17,7 @@ venv/
 **/overlay/
 containers/lastools/LAStools/
 containers/lastools/*.tar.gz
+
+**/.spack-env
+**/spack.lock
+**/case

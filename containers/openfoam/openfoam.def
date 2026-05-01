@@ -1,42 +1,47 @@
-# ===========================================
-# openfoam Apptainer Definition
-# ===========================================
-#
-# Base: ESI OpenFOAM-v2312
-# Source code cloned from GitHub at build time.
-# Custom solvers compiled inside container.
-#
-# Usage:
-#   ./build.sh              # Build SIF from this definition (~60-90 min)
-#   ./run.sh bash          # Enter container shell
-#
-# ===========================================
-
 Bootstrap: docker
-From: openfoam/openfoam2312:latest
+From: ubuntu:22.04
+Stage: build
 
-%post
-    # Install build essentials
-    apt-get update && apt-get install -y \
-        git \
-        build-essential \
-        && rm -rf /var/lib/apt/lists/*
+%files
+  ./spack.yaml /opt/spack.yaml
 
-    # Clone openfoam-ext repo (source code encapsulated in container)
-    mkdir -p /opt
-    git clone https://github.com/wangsen992/openfoam-ext.git /opt/openfoam-ext || true
+%post -c /bin/bash
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get update && \
+    apt-get install -y build-essential gcc gfortran git python3
+  git clone https://github.com/spack/spack.git /usr/src/spack && \
+    . /usr/src/spack/share/spack/setup-env.sh
 
-    # Source OpenFOAM environment and compile custom solvers
-    . /opt/openfoam/OpenFOAM-v2312/etc/bashrc
-    cd /opt/openfoam-ext
-    ./Allwmake
+  spack mirror add e4s https://cache.e4s.io/25.06 && \
+    spack buildcache keys --install --trust && \
+    spack env create openfoam /opt/spack.yaml && \
+    spack -e openfoam install --cache-only
 
-    echo "OpenFOAM container ready with custom solvers"
+  # --- KEY FIX ---
+    # Generate a STATIC script that contains all the environment variables
+    # This avoids running 'spack env activate' at runtime.
+    spack env activate --sh openfoam > /etc/profile.d/z_openfoam_env.sh
 
-%labels
-    org.opencontainers.image.source = "https://github.com/wangsen992/openfoam-ext"
-    org.opencontainers.image.description = "ESI OpenFOAM-v2312 with CROCUS custom solvers"
-    version = "v2312+crocus"
+  . /etc/profile.d/z_openfoam_env.sh
+
+  git clone https://github.com/wangsen992/openfoam-ext.git /opt/openfoam-ext || true
+  # cd /opt/openfoam-ext && ./Allwmake
+
+
 
 %environment
-    . /opt/openfoam/OpenFOAM-v2312/etc/bashrc
+    # . /usr/src/spack/share/spack/setup-env.sh
+    export SPACK_ROOT=/usr/src/spack
+    export PATH=$PATH:$SPACK_ROOT/bin
+    
+    # Source the static environment we created in %post
+    # This loads OpenFOAM and its dependencies instantly
+    . /etc/profile.d/z_openfoam_env.sh
+
+%test
+
+
+%labels
+  Author swang18@nd.edu
+  Version v0.0.1
+
